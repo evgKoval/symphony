@@ -22,29 +22,49 @@ class UserRepository extends ServiceEntityRepository
     // /**
     //  * @return User[] Returns an array of User objects
     //  */
-    /*
-    public function findByExampleField($value)
+    
+    public function findOneByEmail($email)
     {
         return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('u.id', 'ASC')
-            ->setMaxResults(10)
+            ->select('count(u.id)')
+            ->andWhere('u.email = :email')
+            ->setParameter('email', $email)
             ->getQuery()
-            ->getResult()
+            ->getOneOrNullResult();
         ;
     }
-    */
+    
 
-    /*
-    public function findOneBySomeField($value): ?User
+    public function findOneByEmailAndPassword($email, $password)
     {
         return $this->createQueryBuilder('u')
-            ->andWhere('u.exampleField = :val')
-            ->setParameter('val', $value)
+            ->select(['u.id', 'u.email'])
+            ->andWhere('u.email = :email')
+            ->andWhere('u.password = :password')
+            ->setParameter('email', $email)
+            ->setParameter('password', $password)
             ->getQuery()
-            ->getOneOrNullResult()
-        ;
+            ->getOneOrNullResult();
     }
-    */
+
+    public function transform(User $user)
+    {
+        return [
+            'id'    => (int) $user->getId(),
+            'email' => (string) $user->getEmail(),
+            'password' => (string) $user->getPassword()
+        ];
+    }
+
+    public function transformAll()
+    {
+        $users = $this->findAll();
+        $usersArray = [];
+
+        foreach ($users as $user) {
+            $usersArray[] = $this->transform($user);
+        }
+
+        return $usersArray;
+    }
 }

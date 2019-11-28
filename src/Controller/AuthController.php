@@ -2,94 +2,65 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Routing\Annotation\Route;
 
 use App\Entity\User;
+use App\Repository\UserRepository;
 
-class AuthController extends AbstractController
-{
-    public function register(Request $request)
+class AuthController extends ApiController
+{	
+	/**
+    * @Route("api/users", methods="GET")
+    */
+    public function index(UserRepository $userRepository)
     {
-    	$data = $request->request->all();
+		$users = $userRepository->transformAll();
 
-    	$email = '';
-    	$errors = [];
+        return $this->respond($users);
+	}
 
-    	if ($data) {
-    		$email = $data['email'];
-    		$password = $data['password'];
-
-    		if ($email == '') {
-    			$errors[] = "The email field must be filled";
-    		}
-
-    		if (strlen($password) < 6) {
-    			$errors[] = "The password field must be bigger than 5 symbols";
-    		}
-
-    		if(!$errors) {
-    			$entityManager = $this->getDoctrine()->getManager();
-
-    			$user = new User();
-		        $user->setEmail($email);
-		        $user->setPassword($password);
-
-		        $entityManager->persist($user);
-
-		        $entityManager->flush();
-    		}
-    	}
-
-        return $this->render('register.html.twig', [
-        	'email' => $email,
-        	'errors' => $errors
-        ]);
-    }
-
-    public function login(Request $request) 
+	/**
+    * @Route("api/user", methods="POST")
+    */
+    public function login(UserRepository $userRepository, Request $request)
     {
-    	$data = $request->request->all();
+		$user = $userRepository->findOneByEmailAndPassword($request->get('email'), $request->get('password'));
 
-    	$email = '';
-    	$errors = [];
+        return $this->respond($user);
+	}
+	
+	/**
+    * @Route("api/users", methods="POST")
+    */
+    public function create(Request $request, UserRepository $userRepository, EntityManagerInterface $em)
+    {
+        if (!$request) {
+            return $this->respondValidationError('Please provide a valid request!');
+        }
 
-    	if ($data) {
-    		$email = $data['email'];
-    		$password = $data['password'];
+        if (!$request->get('email')) {
+            return $this->respondValidationError('Please provide a email!');
+		}
+		
+		if (!$request->get('password')) {
+            return $this->respondValidationError('Please provide a password!');
+		}
+		
+		$existUser = $userRepository->findOneByEmail($request->get('email'));
 
-    		if ($email == '') {
-    			$errors[] = "The email field must be filled";
-    		}
+		if($existUser[1] == '1') {
+			return $this->respondValidationError('User with this email already exist');
+		}
 
-    		if (strlen($password) < 6) {
-    			$errors[] = "The password field must be bigger than 5 symbols";
-    		}
+        $user = new User();
+		$user->setEmail($request->get('email'));
+		$user->setPassword($request->get('password'));
+        $em->persist($user);
+        $em->flush();
 
-    		if(!$errors) {
-    			$repository = $this->getDoctrine()
-    			                   ->getManager()
-    			                   ->getRepository(User::class);
-
-    			$user = $repository->findOneBy(
-    				[
-    					'email' => $email, 
-    					'password' => $password
-    				], array('email' => 'ASC'), 1 , 0);
-
-    			if ($user) {
-    				return $this->redirectToRoute('index');
-    			} else {
-    				$errors[] = "Invalid user data";
-    			}
-    		}
-    	}
-
-    	return $this->render('login.html.twig', [
-        	'email' => $email,
-        	'errors' => $errors
-        ]);
-    }
+        return $this->respondCreated($userRepository->transform($user));
+	}
 }
