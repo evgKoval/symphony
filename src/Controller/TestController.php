@@ -2,12 +2,13 @@
 
 namespace App\Controller;
 
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 
-class TestController
+class TestController extends AbstractController
 {
     public function index()
     {
-        return new Response('Hello!');
+        return $this->render('index.html.twig');
     }
 }
