@@ -47,12 +47,29 @@ class UserRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    public function findOneById($id)
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+        ;
+    }
+
     public function transform(User $user)
     {
         return [
             'id'    => (int) $user->getId(),
             'email' => (string) $user->getEmail(),
             'password' => (string) $user->getPassword()
+        ];
+    }
+
+    public function getCreatedAt(User $user)
+    {
+        return [
+            'created_at'    => $user->getCreatedAt()
         ];
     }
 
