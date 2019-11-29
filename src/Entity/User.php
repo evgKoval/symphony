@@ -26,6 +26,11 @@ class User
      */
     private $password;
 
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $created_at;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -51,6 +56,18 @@ class User
     public function setPassword(string $password): self
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getCreatedAt()
+    {
+        return $this->created_at;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $created_at)
+    {
+        $this->created_at = $created_at;
 
         return $this;
     }

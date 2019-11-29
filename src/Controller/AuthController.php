@@ -20,7 +20,21 @@ class AuthController extends ApiController
 		$users = $userRepository->transformAll();
 
         return $this->respond($users);
-	}
+    }
+    
+    /**
+    * @Route("api/user/{id}", methods="GET")
+    */
+    public function getCreatedAt(UserRepository $userRepository, int $id)
+    {
+        $user = $userRepository->findOneById($id);
+
+        if (!$user) {
+            return $this->respondValidationError("User with this id doesn't exist!");
+        }
+
+        return $this->respondCreated($userRepository->getCreatedAt($user));
+    }
 
 	/**
     * @Route("api/user", methods="POST")
@@ -58,6 +72,7 @@ class AuthController extends ApiController
         $user = new User();
 		$user->setEmail($request->get('email'));
 		$user->setPassword($request->get('password'));
+		$user->setCreatedAt(new \DateTime());
         $em->persist($user);
         $em->flush();
 
